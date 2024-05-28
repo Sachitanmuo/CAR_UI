@@ -28,7 +28,7 @@ class Ui_CarAccidentRecognition(object):
         # setup the upload button
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         #self.pushButton.setGeometry(QtCore.QRect(320, 460, 201, 61))
-        self.pushButton.setGeometry(QtCore.QRect(10, 560, 790, 30))
+        self.pushButton.setGeometry(QtCore.QRect(10, 500, 790, 90))
         self.pushButton.setObjectName("Report Accident")
         self.gridLayout.addWidget(self.pushButton, 1, 0, 2, 1)
 
@@ -53,12 +53,18 @@ class Ui_CarAccidentRecognition(object):
         #self.graphicsView.setObjectName("graphicsView")
 
         self.closeButton = QtWidgets.QPushButton(self.centralwidget)
-        self.closeButton.setGeometry(QtCore.QRect(500, 560, 790, 30))
+        self.closeButton.setGeometry(QtCore.QRect(500, 500, 790, 90))
         self.closeButton.setObjectName("closeButton")
         self.closeButton.setText("Power off")
-        self.closeButton.clicked.connect(CarAccidentRecognition.close)
+        self.closeButton.clicked.connect(self.on_close_button_clicked)
+        #self.closeButton.clicked.connect(CarAccidentRecognition.close)
         self.gridLayout.addWidget(self.closeButton, 1, 1, 2, 1)
+        self.close_button_clicked = False
 
+    def checkclose(self):
+        return self.close_button_clicked
+    def on_close_button_clicked(self):
+        self.close_button_clicked = True
         
     def retranslateUi(self, CarAccidentRecognition):
         _translate = QtCore.QCoreApplication.translate

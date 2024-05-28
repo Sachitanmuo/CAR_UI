@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import QApplication
 from CAR_interface import Ui_CarAccidentRecognition
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
+import matplotlib.pyplot as plt
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -87,7 +88,7 @@ def main():
     '''=========================================='''
     # load torch
     weights_path = os.path.abspath(os.path.dirname(__file__)) + '/weights'
-    onnx_path = weights_path + "/epoch_100.onnx"
+    onnx_path = weights_path + "/model.onnx"
     model_lst = [x for x in sorted(os.listdir(weights_path)) if x.endswith('.engine')]
     onnx_model = onnx.load(onnx_path)
     ort_session = ort.InferenceSession(onnx_path)
@@ -155,6 +156,7 @@ def main():
         # calib_file = calib_path + id + ".txt"
 
         truth_img = cv2.imread(img_file)
+        truth_img =  cv2.cvtColor(truth_img, cv2.COLOR_BGR2RGB)
         img = np.copy(truth_img)
         yolo_img = np.copy(truth_img)
         start_time_yolo = time.time()
@@ -176,14 +178,20 @@ def main():
                 continue
 
             theta_ray = detectedObject.theta_ray
+            theta_ray = 0
             input_img = detectedObject.img
             input_img_np = input_img.permute(1, 2, 0).cpu().detach().numpy()
+            plt.imshow(input_img_np)
+            plt.show()
+            input_img_np = cv2.cvtColor(input_img_np, cv2.COLOR_BGR2RGB)
+            plt.imshow(input_img_np)
+            plt.show()
             proj_matrix = detectedObject.proj_matrix
             box_2d = detection.box_2d
             detected_class = detection.detected_class
             input_tensor = torch.zeros([1,3,224,224]).cuda() #1, 3, 224, 224
             input_tensor[0,:,:,:] = input_img
-            input_data = {"input": input_tensor.cpu().numpy()}
+            input_data = {"input.1": input_tensor.cpu().numpy()}
             start_time_eff = time.time()
             output_ =  ort_session.run(None, input_data)
             #conf_ = output_
@@ -194,7 +202,7 @@ def main():
             [conf_] = output_
 
             #conf_ = conf_.cpu().numpy()
-            print(f"conf:{conf_}")
+            #print(f"conf:{conf_}")
 
 
             
@@ -203,34 +211,39 @@ def main():
             argmax = np.argmax(conf_)
             #orient_ = orient_[argmax]
             #assume theta_diff = 0
-            cos = np.cos(np.radians(0))
-            sin = np.sin(np.radians(0))
-            alpha = np.arctan2(sin, cos)
-            alpha += angle_bins[argmax]
-            alpha -= np.pi
-            print(f"alpha:{alpha}")
+            #cos = np.cos(np.radians(0))
+            #sin = np.sin(np.radians(0))
+            #alpha = np.arctan2(sin, cos)
+            alpha = (5 * argmax - 90.) * np.pi / 180.0
+            if(alpha >= 1.5*np.pi):
+                alpha -= 2* np.pi
+            print(f"argmax: {argmax}")
+            print(f"alpha: {alpha}")
             if FLAGS.show_yolo:
                 location = plot_regressed_3d_bbox(img, bev_img, proj_matrix, box_2d, dim, alpha, theta_ray, truth_img)
             else:
                 location = plot_regressed_3d_bbox(img, bev_img, proj_matrix, box_2d, dim, alpha, theta_ray)
 
-            if not FLAGS.hide_debug:
-                print('Estimated pose: %s'%location)
+            #if not FLAGS.hide_debug: 
+                #print('Estimated pose: %s'%location)
 
         if FLAGS.show_yolo:
             numpy_vertical = np.concatenate((truth_img, img), axis=0)
             cv2.imshow('SPACE for next image, any other key to exit', numpy_vertical)
             cv2.imshow('BEV', bev_img)
         else:
-            ui.update_bev_image(bev_img)
-            ui.update_3d_image(img)
+            #ui.update_bev_image(bev_img)
+            #ui.update_3d_image(img)
             #time.sleep(1)
             #cv2.imshow('3D detections', img) 
             #cv2.imshow('BEV', bev_img)
             #print(input_img_np.shape)
-            #cv2.imshow('input:', input_img_np)       
-        #ui.update_bev_image(bev_img)
-        #ui.update_3d_image(img)
+            #cv2.imshow('input:', input_img_np)
+            #input()      
+            ui.update_bev_image(bev_img)
+            ui.update_3d_image(img)
+            if(ui.checkclose()):
+                exit()
         if not FLAGS.hide_debug:
             print("\n")
             #print('Got %s poses in %.3f seconds'%(len(detections), time.time() - start_time))
