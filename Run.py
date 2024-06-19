@@ -22,7 +22,7 @@ from torch.autograd import Variable
 from torchvision.models import vgg
 import repvgg_pytorch as repvgg
 import argparse
-from TRT import TRT
+#from TRT import TRT
 #===Use ONNX to speed up===
 import onnx
 import onnxruntime as ort
@@ -32,6 +32,8 @@ from CAR_interface import Ui_CarAccidentRecognition
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
 import matplotlib.pyplot as plt
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -93,9 +95,9 @@ def main():
     onnx_model = onnx.load(onnx_path)
     ort_session = ort.InferenceSession(onnx_path)
 
-    model_path = './weights/epoch_70.trt'
-    trt_model = TRT(model_path=model_path, fp16=True)
-    trt_model.start()
+    #model_path = './weights/epoch_70.trt'
+    #trt_model = TRT(model_path=model_path, fp16=True)
+    #trt_model.start()
     '''
     if len(model_lst) == 0:
         print('No previous model found, please train first!')
@@ -129,7 +131,7 @@ def main():
 
 
     #img_path = os.path.abspath(os.path.dirname(__file__)) + "/" + image_dir
-    img_path = 'C:/Users/99/Desktop/GitHub/3D-BoundingBox/Kitti/image_2/'
+    img_path = 'C:/Users/99/Desktop/GitHub/3D-BoundingBox/eval/image_2/'
     #img_path = 'C:/Users/99/Desktop/GitHub/3D-BoundingBox/eval/image_horizon4/'
     # using P_rect from global calibration file
     #calib_path = os.path.abspath(os.path.dirname(__file__)) + "/" + cal_dir
@@ -181,15 +183,15 @@ def main():
             theta_ray = 0
             input_img = detectedObject.img
             input_img_np = input_img.permute(1, 2, 0).cpu().detach().numpy()
-            plt.imshow(input_img_np)
-            plt.show()
+            #.imshow(input_img_np)
+            #plt.show()
             input_img_np = cv2.cvtColor(input_img_np, cv2.COLOR_BGR2RGB)
-            plt.imshow(input_img_np)
-            plt.show()
+            #plt.imshow(input_img_np)
+            #plt.show()
             proj_matrix = detectedObject.proj_matrix
             box_2d = detection.box_2d
             detected_class = detection.detected_class
-            input_tensor = torch.zeros([1,3,224,224]).cuda() #1, 3, 224, 224
+            input_tensor = torch.zeros([1,3,224,224]).to(device) #1, 3, 224, 224
             input_tensor[0,:,:,:] = input_img
             input_data = {"input.1": input_tensor.cpu().numpy()}
             start_time_eff = time.time()
@@ -209,11 +211,6 @@ def main():
             dim = averages.get_item(detected_class)
 
             argmax = np.argmax(conf_)
-            #orient_ = orient_[argmax]
-            #assume theta_diff = 0
-            #cos = np.cos(np.radians(0))
-            #sin = np.sin(np.radians(0))
-            #alpha = np.arctan2(sin, cos)
             alpha = (5 * argmax - 90.) * np.pi / 180.0
             if(alpha >= 1.5*np.pi):
                 alpha -= 2* np.pi
@@ -224,22 +221,12 @@ def main():
             else:
                 location = plot_regressed_3d_bbox(img, bev_img, proj_matrix, box_2d, dim, alpha, theta_ray)
 
-            #if not FLAGS.hide_debug: 
-                #print('Estimated pose: %s'%location)
 
         if FLAGS.show_yolo:
             numpy_vertical = np.concatenate((truth_img, img), axis=0)
             cv2.imshow('SPACE for next image, any other key to exit', numpy_vertical)
             cv2.imshow('BEV', bev_img)
-        else:
-            #ui.update_bev_image(bev_img)
-            #ui.update_3d_image(img)
-            #time.sleep(1)
-            #cv2.imshow('3D detections', img) 
-            #cv2.imshow('BEV', bev_img)
-            #print(input_img_np.shape)
-            #cv2.imshow('input:', input_img_np)
-            #input()      
+        else:   
             ui.update_bev_image(bev_img)
             ui.update_3d_image(img)
             if(ui.checkclose()):

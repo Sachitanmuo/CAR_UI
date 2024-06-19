@@ -9,12 +9,12 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtGui import QPixmap, QImage, QFont
+from PyQt5.QtWidgets import QMessageBox
 
 class Ui_CarAccidentRecognition(object):
     def setupUi(self, CarAccidentRecognition):
 
-        
         CarAccidentRecognition.setObjectName("CarAccidentRecognition")
         self.w = 1600
         self.h = 600
@@ -24,53 +24,72 @@ class Ui_CarAccidentRecognition(object):
 
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget) 
 
-
         # setup the upload button
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        #self.pushButton.setGeometry(QtCore.QRect(320, 460, 201, 61))
-        self.pushButton.setGeometry(QtCore.QRect(10, 500, 790, 90))
         self.pushButton.setObjectName("Report Accident")
+        self.pushButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.pushButton.setMinimumSize(200, 100)  # Set minimum size
+        self.pushButton.setFont(QFont('Arial', 16))  # Set font
+        self.pushButton.setStyleSheet("background-color: white; color: black;")  # Set background and text color
         self.gridLayout.addWidget(self.pushButton, 1, 0, 2, 1)
+        self.pushButton.clicked.connect(self.on_upload_button_clicked)
 
         self.graphicsView = QtWidgets.QGraphicsView(self.centralwidget)
-        self.graphicsView.setGeometry(QtCore.QRect(10, 10, 390, 270))
         self.graphicsView.setObjectName("graphicsView")
+        self.graphicsView.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout.addWidget(self.graphicsView, 0, 0)
-        
 
         self.graphicsView_3D = QtWidgets.QGraphicsView(self.centralwidget)
-        self.graphicsView_3D.setGeometry(QtCore.QRect(800, 10, 390, 270))
         self.graphicsView_3D.setObjectName("graphicsView_3D")
+        self.graphicsView_3D.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout.addWidget(self.graphicsView_3D, 0, 1)
-
 
         CarAccidentRecognition.setCentralWidget(self.centralwidget)
         self.retranslateUi(CarAccidentRecognition)
         QtCore.QMetaObject.connectSlotsByName(CarAccidentRecognition)
-        #Added: 
-        #self.graphicsView = QtWidgets.QGraphicsView(self.centralwidget)
-        #self.graphicsView.setGeometry(QtCore.QRect(170, 100, 256, 192))
-        #self.graphicsView.setObjectName("graphicsView")
 
         self.closeButton = QtWidgets.QPushButton(self.centralwidget)
-        self.closeButton.setGeometry(QtCore.QRect(500, 500, 790, 90))
         self.closeButton.setObjectName("closeButton")
         self.closeButton.setText("Power off")
+        self.closeButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.closeButton.setMinimumSize(200, 100)  # Set minimum size
+        self.closeButton.setFont(QFont('Arial', 16))  # Set font
+        self.closeButton.setStyleSheet("background-color: white; color: black;")  # Set background and text color
         self.closeButton.clicked.connect(self.on_close_button_clicked)
-        #self.closeButton.clicked.connect(CarAccidentRecognition.close)
         self.gridLayout.addWidget(self.closeButton, 1, 1, 2, 1)
         self.close_button_clicked = False
+        self.upload_button_clicked = False  # Add boolean variable
 
     def checkclose(self):
         return self.close_button_clicked
+    
+    def checkupload(self):
+        return self.upload_button_clicked 
+
     def on_close_button_clicked(self):
         self.close_button_clicked = True
+
+    def on_upload_button_clicked(self):
+        #reply = QMessageBox.question(None, 'Upload', 'Sure to upload?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         
+        msg_box = QMessageBox()
+        msg_box.setText("Sure to upload?")
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.No)
+        msg_box.setStyleSheet("QLabel{min-width: 500px; font-size: 25px;} QPushButton{width: 250px;height: 50px; font-size: 20px;}")
+        reply = msg_box.exec_()
+
+        if reply == QMessageBox.Yes:
+            print("Uploaded")
+            self.upload_button_clicked = True
+        else:
+            print("Uploaded canceled")
+            self.upload_button_clicked = False
+
     def retranslateUi(self, CarAccidentRecognition):
         _translate = QtCore.QCoreApplication.translate
         CarAccidentRecognition.setWindowTitle(_translate("CarAccidentRecognition", "CarAccidentRecognition"))
         self.pushButton.setText(_translate("CarAccidentRecognition", "Upload"))
-
 
     def update_bev_image(self, image):
         """Update the BEV image in the GUI."""
